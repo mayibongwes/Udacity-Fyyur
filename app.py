@@ -289,16 +289,6 @@ def artists():
       "name": artist.name
     })
 
-  # data=[{
-  #   "id": 4,
-  #   "name": "Guns N Petals",
-  # }, {
-  #   "id": 5,
-  #   "name": "Matt Quevedo",
-  # }, {
-  #   "id": 6,
-  #   "name": "The Wild Sax Band",
-  # }]
   return render_template('pages/artists.html', artists=data)
 
 @app.route('/artists/search', methods=['POST'])
@@ -495,7 +485,24 @@ def create_artist_submission():
 @app.route('/shows')
 def shows():
   # displays list of shows at /shows
-  # TODO: replace with real venues data.
+  data = []
+  venue = Venue.query.first()
+  print(venue.shows)
+  # Mayi todo query shows and venues
+  # for show in Show.query.all():
+  #   data.append({
+  #     "city": venue.city,
+  #     "state": venue.state,
+  #     "venues": []
+  #   })
+
+  # for city in data:
+  #   for venue in Venue.query.filter_by(city=city['city']).all():
+  #     city['venues'].append({
+  #       "id":venue.id,
+  #       "name":venue.name,
+  #       "num_upcoming_shows": 0 # Mayi count upcoming shows
+  #     })
   data=[{
     "venue_id": 1,
     "venue_name": "The Musical Hop",
@@ -544,12 +551,28 @@ def create_shows():
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
+  error=False
+  try:
+    artist_id  = request.form.get('artist_id')
+    venue_id   = request.form.get('venue_id')
+    start_time = request.form.get('start_time')
+
+    statement = Show.insert().values(artist_id=artist_id,venue_id=venue_id,start_time=start_time)
+    db.session.execute(statement)
+    db.session.commit()
+  except:
+    error=True
+    db.session.rollback()
+  finally:
+    db.session.close()
 
   # on successful db insert, flash success
-  flash('Show was successfully listed!')
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Show could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  if not error:
+    flash('Show was successfully listed!')
+  else:
+    flash('An error occurred. Show could not be listed.')
+  # on successful db insert, flash success
+
   return render_template('pages/home.html')
 
 @app.errorhandler(404)
