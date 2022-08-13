@@ -1,0 +1,14 @@
+pip install jinja2==3.0
+pip install Werkzeug==2.0.0
+
+f you want to start the fyrr-project locally
+The dependencies might not work after installing the requirements.txt file
+
+You have you manually input these commands to upgrade them all
+
+pip install --upgrade babel
+pip install --upgrade python-dateutil
+pip install --upgrade flask-moment
+pip install --upgrade flask-wtf
+pip install --upgrade flask_sqlalchemy
+pip install --upgrade jinja2
