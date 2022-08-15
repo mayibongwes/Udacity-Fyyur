@@ -51,7 +51,7 @@ class Venue(db.Model):
     phone = db.Column(db.String(120), nullable=True)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
-    genres = db.Column(db.String(120), nullable=False)
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean(), default=False)
     seeking_description = db.Column(db.String(120))
@@ -67,7 +67,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
+    genres = db.Column(db.ARRAY(db.String), nullable=False)
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(120))
@@ -156,9 +156,13 @@ def search_venues():
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
   # shows the venue page with the given venue_id
-  # TODO: replace with real venue data from the venues table, using venue_id
   data = {}
-  venue = db.session.query(Venue).get(venue_id)
+  venue                = db.session.query(Venue).get(venue_id)
+  past_shows           = db.session.query(Artist.name,Artist.image_link,Show).join(Venue).filter(Show.c.venue_id == venue_id).filter(Show.c.start_time<=datetime.now()).all()
+  upcoming_shows       = db.session.query(Artist.name,Artist.image_link,Show).join(Venue).filter(Show.c.venue_id == venue_id).filter(Show.c.start_time>datetime.now()).all()
+  past_shows_count     = 0
+  upcoming_shows_count = 0
+
   if venue is not None:
     data = {
       "id": venue.id,
@@ -173,26 +177,30 @@ def show_venue(venue_id):
       "seeking_talent": venue.seeking_talent,
       "seeking_description": venue.seeking_description,
       "image_link": venue.image_link,
-      "past_shows": [{
-        "artist_id": 4,
-        "artist_name": "Guns N Petals",
-        "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-        "start_time": "2019-05-21T21:30:00.000Z"
-      }],
-      "upcoming_shows": [{
-        "artist_id": 6,
-        "artist_name": "The Wild Sax Band",
-        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-        "start_time": "2035-04-01T20:00:00.000Z"
-      }, {
-        "artist_id": 6,
-        "artist_name": "The Wild Sax Band",
-        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-        "start_time": "2035-04-08T20:00:00.000Z"
-      }],
-      "past_shows_count": 1,
+      "past_shows": [],
+      "upcoming_shows": [],
+      "past_shows_count": 0,
       "upcoming_shows_count": 0,
     }
+    for show in past_shows:
+      data["past_shows"].append({
+           "artist_id": show['artist_id'],
+           "artist_name": show['name'],
+           "artist_image_link": show['image_link'],
+           "start_time": show['start_time'].isoformat()
+      })
+      past_shows_count = past_shows_count + 1
+    for show in upcoming_shows:
+      data['upcoming_shows'].append({
+        "artist_id": show['artist_id'],
+        "artist_name": show['name'],
+        "artist_image_link": show['image_link'],
+        "start_time": show['start_time'].isoformat()
+      })
+      upcoming_shows_count = upcoming_shows_count + 1
+
+    data['past_shows_count']     = past_shows_count
+    data['upcoming_shows_count'] = upcoming_shows_count
     return render_template('pages/show_venue.html', venue=data)
   else:
     return redirect(url_for('venues'))
@@ -324,11 +332,16 @@ def show_artist(artist_id):
   # TODO: replace with real artist data from the artist table, using artist_id
   data = {}
   artist = db.session.query(Artist).get(artist_id)
+  past_shows           = db.session.query(Venue.name,Venue.image_link,Show).join(Artist).filter(Show.c.artist_id == artist_id).filter(Show.c.start_time<=datetime.now()).all()
+  upcoming_shows       = db.session.query(Venue.name,Venue.image_link,Show).join(Artist).filter(Show.c.artist_id == artist_id).filter(Show.c.start_time>datetime.now()).all()
+  past_shows_count = 0
+  upcoming_shows_count = 0
+  
   if artist is not None:
     data = {
       "id": artist.id,
       "name": artist.name,
-      "genres": ["Rock n Roll"], # Mayi fix Gneres
+      "genres": artist.genres,
       "city": artist.city,
       "state": artist.state,
       "phone": artist.phone,
@@ -337,16 +350,30 @@ def show_artist(artist_id):
       "seeking_venue": artist.seeking_venues,
       "seeking_description": artist.seeking_description,
       "image_link": artist.image_link,
-      "past_shows": [{
-        "venue_id": 1,
-        "venue_name": "The Musical Hop",
-        "venue_image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60",
-        "start_time": "2019-05-21T21:30:00.000Z"
-      }],
+      "past_shows": [],
       "upcoming_shows": [],
       "past_shows_count": 1,
       "upcoming_shows_count": 0,
     }
+    for show in past_shows:
+      data["past_shows"].append({
+           "venue_id": show['artist_id'],
+           "venue_name": show['name'],
+           "venue_image_link": show['image_link'],
+           "start_time": show['start_time'].isoformat()
+      })
+      past_shows_count = past_shows_count + 1
+    for show in upcoming_shows:
+      data['upcoming_shows'].append({
+        "venue_id": show['artist_id'],
+        "venue_name": show['name'],
+        "venue_image_link": show['image_link'],
+        "start_time": show['start_time'].isoformat()
+      })
+      upcoming_shows_count = upcoming_shows_count + 1
+
+    data['past_shows_count']     = past_shows_count
+    data['upcoming_shows_count'] = upcoming_shows_count
 
   return render_template('pages/show_artist.html', artist=data)
 
@@ -364,7 +391,7 @@ def edit_artist(artist_id):
     artist = {
       "id": data.id,
       "name": data.name,
-      "genres": ["Rock n Roll"], # Mayi fix Gneres
+      "genres": data.genres,
       "city": data.city,
       "state": data.state,
       "phone": data.phone,
