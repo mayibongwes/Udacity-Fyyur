@@ -1,6 +1,6 @@
 from datetime import datetime
 from email import message
-from flask_wtf import Form,FlaskForm
+from flask_wtf import Form
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField, BooleanField
 from wtforms.validators import DataRequired, AnyOf, URL, Regexp
 
@@ -17,7 +17,7 @@ class ShowForm(Form):
         default= datetime.today()
     )
 
-class VenueForm(FlaskForm):
+class VenueForm(Form):
     name = StringField(
         'name', validators=[DataRequired()]
     )
@@ -84,7 +84,9 @@ class VenueForm(FlaskForm):
         'address', validators=[DataRequired()]
     )
     phone = StringField(
-        'phone', validators=[DataRequired(), Regexp('^[+-]?[0-9]$', message="Phone number must contain only numbers")]
+        # Regex reference: https://stackoverflow.com/questions/4058001/validate-south-africa-cell-phone-number
+        # This regular expression only works for South african phone numbers in 0721231234 or +27721231234
+        'phone', validators=[DataRequired(), Regexp('^(\+27|0)[6-8][0-9]{8}$', message="Phone number must contain only numbers")]    # '^[+-]?[0-9]$'
     )
     image_link = StringField(
         'image_link', validators=[URL()]
@@ -193,8 +195,9 @@ class ArtistForm(Form):
         ]
     )
     phone = StringField(
-        # TODO implement validation logic for phone 
-        'phone'
+        # Regex reference: https://stackoverflow.com/questions/4058001/validate-south-africa-cell-phone-number
+        # This regular expression only works for South african phone numbers in 0721231234 or +27721231234
+        'phone', validators=[DataRequired(), Regexp('^(\+27|0)[6-8][0-9]{8}$', message="Phone number must contain only numbers")]    # '^[+-]?[0-9]$'
     )
     image_link = StringField(
         'image_link'

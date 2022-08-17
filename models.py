@@ -6,11 +6,11 @@ db = SQLAlchemy()
 #----------------------------------------------------------------------------#
 
 Show = db.Table(
-	'Show',
-	db.Model.metadata,
-	db.Column('start_time', db.DateTime, primary_key = True),
-  db.Column('venue_id',   db.Integer, db.ForeignKey('Venue.id'),  primary_key=True),
-  db.Column('artist_id',  db.Integer, db.ForeignKey('Artist.id'), primary_key=True)
+    'Show',
+  	db.Model.metadata,
+    db.Column('start_time', db.DateTime, primary_key = True),
+    db.Column('venue_id',   db.Integer, db.ForeignKey('Venue.id'),  primary_key=True),
+    db.Column('artist_id',  db.Integer, db.ForeignKey('Artist.id'), primary_key=True)
 ) 
 
 class Venue(db.Model):
@@ -44,3 +44,4 @@ class Artist(db.Model):
     website_link = db.Column(db.String(120))
     seeking_venues = db.Column(db.Boolean(), default=False)
     seeking_description = db.Column(db.String(120))
+    
